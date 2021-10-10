@@ -1,6 +1,9 @@
 // 引入需要的模块
 const http = require('http');
 const mysql = require('mysql');
+const {
+  resolve
+} = require('path');
 const querystring = require('querystring');
 const url = require("url");
 const {
@@ -14,7 +17,7 @@ let connection = mysql.createConnection(config);
 connection.connect(function (err) {
   if (err) {
     console.log('error')
-  }else{
+  } else {
     console.log('connect success!');
   }
 });
@@ -23,7 +26,7 @@ connection.connect(function (err) {
 const server = http.createServer((req, res) => {
   res.statusCode = 200;
   // res.setHeader('Content-Type', "text/html;charset=utf-8");
-  res.setHeader('Content-Type','text/plain');
+  // res.setHeader('Content-Type', 'text/plain');
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "*");
   res.setHeader("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
@@ -31,47 +34,76 @@ const server = http.createServer((req, res) => {
 
 server.on('request', (request, response) => {
   let initurl = request.url;
-  let body="";
-  // 获取post请求的参数
-  if(request.method == 'POST'){
+  var body = "";
+  let urlObj;
+  let queryObj;
+  urlObj = url.parse(initurl);
+
+  function searchEvent(value) {
+    console.log('value222', value, typeof(value));
+
+    let params = value;
+    
+    let middleParam = params && JSON.parse(params.toString());
+
+    let sqlParams = middleParam ? `v_event_noteClassify = ${middleParam['v_event_noteClassify']}` : '';
+
+    console.log(middleParam['v_event_noteClassify']);
+  
+      connection.query(`select * from t_note_event where v_event_noteClassify = '笔记'`, (err, row) => {
+        if (err) {
+          console.log('错误信息', err);
+        } else {
+          let data = JSON.stringify(row); //将数据转换为json格式
+          response.end(data)
+        }
+      })
+    
+
+  }
+
+
+  if (urlObj.pathname == '/getnoteevent') {
+    // 获取post请求的参数
+
     request.on('data', (chunk) => {
-      body += chunk;
-      console.log('CHECKK....',JSON.parse(chunk.toString()));
+      body += chunk.toString();
+      console.log('chunk', body);
+
+
     });
-  }
-  let urlObj = url.parse(initurl);
-  let query = urlObj.query;
-  let queryObj = querystring.parse(query)
-  if(urlObj.pathname == '/favicon.ico' || urlObj.pathname == ''){
-    return;
-  }else{
-    console.log('请求体',request.method);
 
-  }
 
-  if (urlObj.pathname === '/getnoteevent') {
-    // 查询数据
-    connection.query('select * from t_note_event',  (err, row) => {
-      if (err) {
-        console.log(err);
-      }else{
-        let data = JSON.stringify(row); //将数据转换为json格式
-        response.end(data);
-      }
+    request.on('end', () => {
+      searchEvent(body);
+
     })
   }
-  if(urlObj.pathname == '/getalluser'){
 
+
+
+
+
+
+  if (urlObj.pathname == '/getalluser' && request.method.toUpperCase() == 'GET') {
+    queryObj = querystring.parse(urlObj.query)
+    // console.log('get请求体参数',queryObj);
     connection.query('select * from t_note_user', (err, row) => {
       if (err) {
         console.log(err);
-      }else{
+      } else {
         let data = JSON.stringify(row); //将数据转换为json格式
         response.end(data);
       }
     })
   }
+
+
 })
+
+
+
+
 
 // 监听9000端口
 server.listen(9000, () => {
