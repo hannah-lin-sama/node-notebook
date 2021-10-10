@@ -1,6 +1,8 @@
 // 引入需要的模块
-let http = require('http');
-let mysql = require('mysql');
+const http = require('http');
+const mysql = require('mysql');
+const querystring = require('querystring');
+const url = require("url");
 const {
   config
 } = require('./config/mysqlConfig.js');
@@ -18,19 +20,38 @@ connection.connect(function (err) {
 });
 
 // 创建一个web服务器
-const server = http.createServer(function (req, res) {
+const server = http.createServer((req, res) => {
   res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain;charset=utf-8');
+  // res.setHeader('Content-Type', "text/html;charset=utf-8");
+  res.setHeader('Content-Type','text/plain');
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With");
+  res.setHeader("Access-Control-Allow-Headers", "*");
   res.setHeader("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
 })
 
-server.on('request', function (request, response) {
-  let url = request.url;
-  if (url === '/getnoteevent') {
+server.on('request', (request, response) => {
+  let initurl = request.url;
+  let body="";
+  // 获取post请求的参数
+  if(request.method == 'POST'){
+    request.on('data', (chunk) => {
+      body += chunk;
+      console.log('CHECKK....',JSON.parse(chunk.toString()));
+    });
+  }
+  let urlObj = url.parse(initurl);
+  let query = urlObj.query;
+  let queryObj = querystring.parse(query)
+  if(urlObj.pathname == '/favicon.ico' || urlObj.pathname == ''){
+    return;
+  }else{
+    console.log('请求体',request.method);
+
+  }
+
+  if (urlObj.pathname === '/getnoteevent') {
     // 查询数据
-    connection.query('select * from t_note_event', function (err, row) {
+    connection.query('select * from t_note_event',  (err, row) => {
       if (err) {
         console.log(err);
       }else{
@@ -39,8 +60,9 @@ server.on('request', function (request, response) {
       }
     })
   }
-  if(url === '/getalluser'){
-    connection.query('select * from t_note_user', function (err, row) {
+  if(urlObj.pathname == '/getalluser'){
+
+    connection.query('select * from t_note_user', (err, row) => {
       if (err) {
         console.log(err);
       }else{
@@ -52,7 +74,6 @@ server.on('request', function (request, response) {
 })
 
 // 监听9000端口
-
-server.listen(9000, function () {
+server.listen(9000, () => {
   console.log('服务器启动了。。。')
 })
