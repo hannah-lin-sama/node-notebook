@@ -40,25 +40,25 @@ server.on('request', (request, response) => {
   urlObj = url.parse(initurl);
 
   function searchEvent(value) {
-    console.log('value222', value, typeof(value));
+    console.log('value222', value, typeof (value));
 
     let params = value;
-    
+
     let middleParam = params && JSON.parse(params.toString());
 
     let sqlParams = middleParam ? `v_event_noteClassify = ${middleParam['v_event_noteClassify']}` : '';
 
     console.log(middleParam['v_event_noteClassify']);
-  
-      connection.query(`select * from t_note_event where v_event_noteClassify = '笔记'`, (err, row) => {
-        if (err) {
-          console.log('错误信息', err);
-        } else {
-          let data = JSON.stringify(row); //将数据转换为json格式
-          response.end(data)
-        }
-      })
-    
+
+    connection.query(`select * from t_note_event where v_event_noteClassify = '笔记'`, (err, row) => {
+      if (err) {
+        console.log('错误信息', err);
+      } else {
+        let data = JSON.stringify(row); //将数据转换为json格式
+        response.end(data)
+      }
+    })
+
 
   }
 
