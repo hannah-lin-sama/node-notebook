@@ -1,26 +1,13 @@
 // 引入需要的模块
 const http = require('http');
-const mysql = require('mysql');
-const {
-  resolve
-} = require('path');
 const querystring = require('querystring');
 const url = require("url");
 const {
-  config
-} = require('./config/mysqlConfig.js');
+  sqlConnect,
+  connection
+} = require('./config/mysqlConfig');
 
-// 创建数据库连接池
-let connection = mysql.createConnection(config);
-
-// 连接
-connection.connect(function (err) {
-  if (err) {
-    console.log('error')
-  } else {
-    console.log('connect success!');
-  }
-});
+sqlConnect();
 
 // 创建一个web服务器
 const server = http.createServer((req, res) => {
@@ -33,24 +20,31 @@ const server = http.createServer((req, res) => {
 })
 
 server.on('request', (request, response) => {
+  // 访问的地址
   let initurl = request.url;
-  var body = "";
-  let urlObj;
+  // get请求的参数
   let queryObj;
+  // post请求的参数
+  var body = "";
+  // 访问的地址,不包含主机地址,URL对象
+  let urlObj;
+
+
   urlObj = url.parse(initurl);
 
   function searchEvent(value) {
-    console.log('value222', value, typeof (value));
 
     let params = value;
 
     let middleParam = params && JSON.parse(params.toString());
 
-    let sqlParams = middleParam ? `v_event_noteClassify = ${middleParam['v_event_noteClassify']}` : '';
-
-    console.log(middleParam['v_event_noteClassify']);
-
-    connection.query(`select * from t_note_event where v_event_noteClassify = '笔记'`, (err, row) => {
+    // console.log(middleParam,middleParam['v_event_noteClassify']);
+    let normalSQL = `select * from t_note_event`;
+    let paramsSQL = `select * from t_note_event where v_event_noteClassify = '${middleParam['v_event_noteClassify']}'`;
+    // console.log(middleParam,'参数...',middleParam['v_event_noteClassify']);
+    let lastSQL = middleParam ? paramsSQL: normalSQL;
+    console.log('last....',lastSQL);
+    connection.query( lastSQL, (err, row) => {
       if (err) {
         console.log('错误信息', err);
       } else {
@@ -58,21 +52,14 @@ server.on('request', (request, response) => {
         response.end(data)
       }
     })
-
-
   }
-
 
   if (urlObj.pathname == '/getnoteevent') {
     // 获取post请求的参数
-
     request.on('data', (chunk) => {
       body += chunk.toString();
       console.log('chunk', body);
-
-
     });
-
 
     request.on('end', () => {
       searchEvent(body);
