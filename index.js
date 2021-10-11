@@ -29,7 +29,6 @@ server.on('request', (request, response) => {
   // 访问的地址,不包含主机地址,URL对象
   let urlObj;
 
-
   urlObj = url.parse(initurl);
 
   function searchEvent(value) {
@@ -43,7 +42,7 @@ server.on('request', (request, response) => {
     let paramsSQL = `select * from t_note_event where v_event_noteClassify = '${middleParam['v_event_noteClassify']}'`;
     // console.log(middleParam,'参数...',middleParam['v_event_noteClassify']);
     let lastSQL = middleParam ? paramsSQL: normalSQL;
-    console.log('last....',lastSQL);
+    // console.log('last....',lastSQL);
     connection.query( lastSQL, (err, row) => {
       if (err) {
         console.log('错误信息', err);
@@ -60,17 +59,16 @@ server.on('request', (request, response) => {
       body += chunk.toString();
       console.log('chunk', body);
     });
-
-    request.on('end', () => {
+    process.nextTick(() =>{
+      console.log('process',body);
       searchEvent(body);
 
     })
+
+    request.on('end', () => {
+
+    })
   }
-
-
-
-
-
 
   if (urlObj.pathname == '/getalluser' && request.method.toUpperCase() == 'GET') {
     queryObj = querystring.parse(urlObj.query)
@@ -84,7 +82,6 @@ server.on('request', (request, response) => {
       }
     })
   }
-
 
 })
 
